@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nobeon — Modèles 3D</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f4f1; --surface: #ffffff; --accent: #111111;
+      --muted: #888; --border: #e2dfd9; --highlight: #d4ff6e;
+      --font: 'Inter', sans-serif;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font); background: var(--bg); color: var(--accent); font-size: 15px; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px; height: 60px;
+      background: var(--bg); border-bottom: 1px solid var(--border);
+    }
+    .nav-logo { font-size: 16px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; color: var(--accent); }
+    .nav-links { display: flex; gap: 0; list-style: none; }
+    .nav-links a {
+      display: block; text-decoration: none; color: var(--muted);
+      font-size: 12px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase;
+      padding: 0 20px; height: 60px; line-height: 60px;
+      border-bottom: 2px solid transparent; transition: color 0.2s, border-color 0.2s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-links a.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .nav-admin-btn {
+      background: none; border: 1px solid var(--border); font-family: var(--font);
+      font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); padding: 7px 16px; cursor: pointer; transition: all 0.2s;
+    }
+    .nav-admin-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* HERO */
+    .hero { padding-top: 60px; display: grid; grid-template-columns: 1fr 1fr; min-height: 60vh; }
+    .hero-left { display: flex; flex-direction: column; justify-content: flex-end; padding: 56px 48px; background: var(--accent); color: #fff; }
+    .hero-tag { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #555; margin-bottom: 20px; }
+    .hero h1 { font-size: clamp(36px, 4vw, 62px); font-weight: 700; letter-spacing: -0.025em; line-height: 1.05; margin-bottom: 20px; }
+    .hero h1 span { color: var(--highlight); }
+    .hero-sub { font-size: 14px; color: #aaa; line-height: 1.7; max-width: 340px; }
+    .hero-right { display: flex; flex-direction: column; justify-content: flex-end; padding: 40px 48px; background: #e8e4dc; position: relative; }
+    .hero-right-label { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    .hero-scroll-hint { position: absolute; bottom: 40px; right: 48px; font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+    .hero-scroll-hint::before { content:''; display:block; width: 32px; height: 1px; background: var(--muted); }
+
+    /* SECTIONS */
+    .cat-section { padding: 80px 48px 64px; }
+    .cat-section + .cat-section { border-top: 1px solid var(--border); }
+    .cat-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 40px; }
+    .cat-title { font-size: clamp(28px, 3vw, 44px); font-weight: 700; letter-spacing: -0.025em; line-height: 1; }
+    .cat-count { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+
+    /* GRILLE */
+    .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 2px; }
+
+    /* CARTE */
+    .model-card { background: var(--surface); cursor: pointer; overflow: hidden; }
+    .model-img { aspect-ratio: 4/3; background: #e8e4dc; position: relative; overflow: hidden; }
+    .model-img-placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+    .model-img-placeholder svg { opacity: 0.15; }
+    .model-img img { width:100%; height:100%; object-fit:cover; display:block; transition: transform 0.4s ease; }
+    .model-card:hover .model-img img { transform: scale(1.05); }
+    .model-tag { position: absolute; top: 12px; left: 12px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 10px; }
+    .model-tag.new { background: var(--highlight); color: var(--accent); }
+    .model-info { padding: 16px 18px 20px; border-top: 1px solid var(--border); }
+    .model-name { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 5px; }
+    .model-desc { font-size: 12px; color: #888; line-height: 1.55; margin-bottom: 12px; }
+    .model-specs { display: flex; gap: 14px; flex-wrap: wrap; }
+    .model-spec { font-size: 11px; color: var(--muted); }
+    .model-spec strong { color: var(--accent); font-weight: 600; }
+
+    /* LIGHTBOX */
+    .lightbox { display:none; position:fixed; inset:0; z-index:500; background:rgba(0,0,0,0.88); align-items:center; justify-content:center; }
+    .lightbox.open { display:flex; }
+    .lightbox-inner { background:#fff; max-width:860px; width:90%; display:grid; grid-template-columns:1fr 1fr; max-height:90vh; }
+    .lightbox-img { background:#e8e4dc; display:flex; align-items:center; justify-content:center; min-height:300px; }
+    .lightbox-img img { width:100%; height:100%; object-fit:cover; display:block; }
+    .lightbox-content { padding:40px 36px; display:flex; flex-direction:column; overflow-y:auto; }
+    .lightbox-cat { font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+    .lightbox-name { font-size:26px; font-weight:700; letter-spacing:-0.02em; margin-bottom:14px; }
+    .lightbox-desc { font-size:14px; color:#555; line-height:1.75; margin-bottom:28px; }
+    .lightbox-specs { margin-bottom:28px; }
+    .lightbox-spec { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; }
+    .lightbox-spec span:first-child { color:var(--muted); }
+    .lightbox-spec span:last-child { font-weight:600; }
+    .lightbox-close { position:absolute; top:20px; right:20px; background:none; border:none; color:#fff; font-size:24px; cursor:pointer; }
+
+    /* PANEL ADMIN */
+    .admin-overlay { display:none; position:fixed; inset:0; z-index:600; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; }
+    .admin-overlay.open { display:flex; }
+    .admin-panel {
+      background: #fff; width: 520px; max-width: 95vw; max-height: 90vh;
+      overflow-y: auto; padding: 40px;
+    }
+    .admin-title { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 28px; }
+    .admin-form { display: flex; flex-direction: column; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .form-input, .form-select, .form-textarea {
+      font-family: var(--font); font-size: 14px; color: var(--accent);
+      background: var(--bg); border: 1px solid var(--border);
+      padding: 10px 14px; outline: none; transition: border-color 0.2s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+    .form-textarea { resize: vertical; min-height: 80px; }
+    .form-hint { font-size: 11px; color: var(--muted); }
+    .admin-actions { display: flex; gap: 10px; margin-top: 8px; }
+    .btn-save {
+      background: var(--accent); color: #fff; border: none;
+      font-family: var(--font); font-size: 13px; font-weight: 600;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      padding: 13px 28px; cursor: pointer; transition: background 0.2s; flex: 1;
+    }
+    .btn-save:hover { background: #333; }
+    .btn-cancel {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      font-family: var(--font); font-size: 13px; font-weight: 500;
+      padding: 13px 20px; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-cancel:hover { border-color: var(--accent); color: var(--accent); }
+    .admin-status { font-size: 13px; padding: 10px 14px; margin-top: 4px; display: none; }
+    .admin-status.success { background: #e8f5e9; color: #2e7d32; display: block; }
+    .admin-status.error { background: #fdecea; color: #c62828; display: block; }
+
+    /* PASSWORD OVERLAY */
+    .pwd-overlay { display:none; position:fixed; inset:0; z-index:700; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; }
+    .pwd-overlay.open { display:flex; }
+    .pwd-box { background:#fff; padding:40px; width:360px; max-width:95vw; }
+    .pwd-title { font-size:18px; font-weight:700; margin-bottom:20px; }
+    .pwd-input { font-family:var(--font); font-size:14px; width:100%; padding:10px 14px; border:1px solid var(--border); outline:none; margin-bottom:12px; }
+    .pwd-input:focus { border-color:var(--accent); }
+    .pwd-btn { width:100%; background:var(--accent); color:#fff; border:none; font-family:var(--font); font-size:13px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; padding:13px; cursor:pointer; }
+    .pwd-error { font-size:12px; color:#c62828; margin-top:8px; display:none; }
+
+    /* LOADING */
+    .loading { text-align:center; padding:60px; color:var(--muted); font-size:13px; letter-spacing:0.08em; text-transform:uppercase; }
+
+    /* FOOTER */
+    footer { background: var(--accent); color: #666; padding: 40px 48px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #222; }
+    .footer-logo { font-size: 15px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #fff; }
+    .footer-right { display: flex; gap: 28px; }
+    .footer-right a { font-size: 12px; color: #666; text-decoration: none; transition: color 0.2s; }
+    .footer-right a:hover { color: #fff; }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 16px; }
+      .nav-links { display: none; }
+      .hero { grid-template-columns: 1fr; }
+      .hero-right { min-height: 160px; }
+      .hero-left { padding: 48px 24px; }
+      .cat-section { padding: 56px 20px 48px; }
+      .lightbox-inner { grid-template-columns: 1fr; }
+      footer { flex-direction: column; gap: 20px; padding: 32px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">Nobeon</a>
+  <ul class="nav-links">
+    <li><a href="#minifig">Minifig</a></li>
+    <li><a href="#noel">Noël</a></li>
+    <li><a href="#divers">Divers</a></li>
+    <li><a href="#lampe">Lampe</a></li>
+    <li><a href="#kit-card">Kit Card</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <button class="nav-admin-btn" id="open-admin">+ Ajouter</button>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-tag">Impression 3D · Fait main</div>
+    <h1>Mes créations<br><span>3D</span></h1>
+    <p class="hero-sub">Minifigs, déco de Noël, lampes, kits — chaque modèle est conçu et imprimé à la main, disponible à la commande.</p>
+  </div>
+  <div class="hero-right">
+    <div class="hero-right-label">Nobeon Studio</div>
+    <div class="hero-scroll-hint">Explorer</div>
+  </div>
+</div>
+
+<!-- SECTIONS -->
+<section class="cat-section" id="minifig">
+  <div class="cat-header"><h2 class="cat-title">Minifig</h2><span class="cat-count" id="count-minifig"></span></div>
+  <div class="models-grid" id="grid-minifig"><div class="loading">Chargement…</div></div>
+</section>
+<section class="cat-section" id="noel">
+  <div class="cat-header"><h2 class="cat-title">Noël</h2><span class="cat-count" id="count-noel"></span></div>
+  <div class="models-grid" id="grid-noel"><div class="loading">Chargement…</div></div>
+</section>
+<section class="cat-section" id="divers">
+  <div class="cat-header"><h2 class="cat-title">Divers</h2><span class="cat-count" id="count-divers"></span></div>
+  <div class="models-grid" id="grid-divers"><div class="loading">Chargement…</div></div>
+</section>
+<section class="cat-section" id="lampe">
+  <div class="cat-header"><h2 class="cat-title">Lampe</h2><span class="cat-count" id="count-lampe"></span></div>
+  <div class="models-grid" id="grid-lampe"><div class="loading">Chargement…</div></div>
+</section>
+<section class="cat-section" id="kit-card">
+  <div class="cat-header"><h2 class="cat-title">Kit Card</h2><span class="cat-count" id="count-kit-card"></span></div>
+  <div class="models-grid" id="grid-kit-card"><div class="loading">Chargement…</div></div>
+</section>
+
+<footer id="contact">
+  <span class="footer-logo">Nobeon</span>
+  <div class="footer-right">
+    <a href="mailto:contact@nobeon.fr">contact@nobeon.fr</a>
+    <a href="#">Instagram</a>
+    <a href="#">Etsy</a>
+  </div>
+</footer>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightbox-close">✕</button>
+  <div class="lightbox-inner">
+    <div class="lightbox-img" id="lb-img"></div>
+    <div class="lightbox-content">
+      <div class="lightbox-cat" id="lb-cat"></div>
+      <div class="lightbox-name" id="lb-name"></div>
+      <div class="lightbox-desc" id="lb-desc"></div>
+      <div class="lightbox-specs" id="lb-specs"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MOT DE PASSE -->
+<div class="pwd-overlay" id="pwd-overlay">
+  <div class="pwd-box">
+    <div class="pwd-title">Accès admin</div>
+    <input class="pwd-input" type="password" id="pwd-input" placeholder="Mot de passe…"/>
+    <button class="pwd-btn" id="pwd-btn">Entrer</button>
+    <div class="pwd-error" id="pwd-error">Mot de passe incorrect.</div>
+  </div>
+</div>
+
+<!-- PANEL ADMIN -->
+<div class="admin-overlay" id="admin-overlay">
+  <div class="admin-panel">
+    <div class="admin-title">Ajouter un article</div>
+    <div class="admin-form">
+      <div class="form-group">
+        <label class="form-label">Catégorie</label>
+        <select class="form-select" id="f-cat">
+          <option value="minifig">Minifig</option>
+          <option value="noel">Noël</option>
+          <option value="divers">Divers</option>
+          <option value="lampe">Lampe</option>
+          <option value="kit-card">Kit Card</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nom du modèle</label>
+        <input class="form-input" type="text" id="f-name" placeholder="Ex : Minifig Yoda"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-textarea" id="f-desc" placeholder="Description courte du modèle…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">URL / chemin de la photo</label>
+        <input class="form-input" type="text" id="f-photo" placeholder="images/maphoto.jpg"/>
+        <span class="form-hint">Place ton image dans le dossier images/ sur GitHub, puis indique son nom ici.</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Matière</label>
+        <input class="form-input" type="text" id="f-mat" placeholder="Ex : PLA, PETG…"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Délai de fabrication</label>
+        <input class="form-input" type="text" id="f-delai" placeholder="Ex : 3 jours"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Badge (optionnel)</label>
+        <input class="form-input" type="text" id="f-badge" placeholder="Ex : Nouveau, Bestseller…"/>
+      </div>
+      <div class="admin-status" id="admin-status"></div>
+      <div class="admin-actions">
+        <button class="btn-save" id="btn-save">Enregistrer</button>
+        <button class="btn-cancel" id="btn-cancel">Annuler</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const BIN_ID  = "69b6c1aec3097a1dd5290df8";
+  const API_KEY = "$2a$10$h6gT2GNQ1/P1KCIqCc2NiOXNdYRjRwrr/UXslHFn4AarkDsp/FXpi";
+  const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+  const ADMIN_PWD = "nobeon2026"; // ← change ce mot de passe
+
+  const categoryLabels = { "minifig":"Minifig","noel":"Noël","divers":"Divers","lampe":"Lampe","kit-card":"Kit Card" };
+
+  let catalog = {};
+
+  // ── FETCH CATALOGUE ──
+  async function loadCatalog() {
+    try {
+      const res = await fetch(API_URL + "/latest", { headers: { "X-Master-Key": API_KEY } });
+      const data = await res.json();
+      catalog = data.record;
+      // Si le bin est vide ou mal initialisé, on part des données par défaut
+      if (!catalog || typeof catalog !== "object") catalog = getDefaultCatalog();
+    } catch(e) {
+      catalog = getDefaultCatalog();
+    }
+    renderAll();
+  }
+
+  // ── DONNÉES PAR DÉFAUT ──
+  function getDefaultCatalog() {
+    return {
+      "minifig": [
+        { id:"mf1", name:"Spiderman",      description:"Minifig Spiderman en PLA, couleurs vives, détails costume imprimés.",   photo:"images/fig1.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
+        { id:"mf2", name:"Superman",       description:"Minifig Superman en PLA, cape et logo S fidèlement reproduits.",         photo:"images/fig2.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
+        { id:"mf3", name:"Batman",         description:"Minifig Batman en PLA noir mat, combinaison et cape détaillées.",        photo:"images/fig3.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
+        { id:"mf4", name:"Harry Potter",   description:"Minifig Harry Potter avec cape, baguette et lunettes rondes.",           photo:"images/fig4.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
+        { id:"mf5", name:"Gandalf",        description:"Minifig Gandalf le Gris avec chapeau et bâton de sorcier.",              photo:"images/fig5.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
+        { id:"mf6", name:"Stormtrooper",   description:"Minifig Stormtrooper Star Wars en PLA blanc, armure détaillée.",         photo:"images/fig6.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
+        { id:"mf7", name:"Indiana Jones",  description:"Minifig Indiana Jones avec chapeau, fouet et veste en cuir.",             photo:"images/fig7.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
+        { id:"mf8", name:"Dark Vador",     description:"Minifig Dark Vador en PLA noir brillant, casque et cape iconiques.",     photo:"images/fig8.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
+      ],
+      "noel": [
+        { id:"no1", name:"Boules de Noël",    description:"Boules de Noël classiques ajourées avec motifs étoilés.",            photo:"images/boule1.jpg", badge:null, specs:{ Matière:"PLA mat", Diamètre:"8 cm", Délai:"2 jours" } },
+        { id:"no2", name:"Étoile de la Mort", description:"Boule de Noël en forme d'Étoile de la Mort.",                       photo:"images/boule2.jpg", badge:null, specs:{ Matière:"PLA", Diamètre:"8 cm", Délai:"2 jours" } },
+        { id:"no3", name:"Stormtrooper",      description:"Boule de Noël en forme de casque Stormtrooper.",                    photo:"images/boule3.jpg", badge:null, specs:{ Matière:"PLA blanc", Diamètre:"8 cm", Délai:"2 jours" } },
+        { id:"no4", name:"Dark Vador",        description:"Boule de Noël en forme de casque Dark Vador.",                      photo:"images/boule4.jpg", badge:null, specs:{ Matière:"PLA noir", Diamètre:"8 cm", Délai:"2 jours" } },
+        { id:"no5", name:"Vif d'Or",          description:"Boule de Noël en forme de Vif d'Or de Harry Potter, dorée et ailée.", photo:"images/boule5.jpg", badge:null, specs:{ Matière:"PLA silk or", Diamètre:"7 cm", Délai:"2 jours" } },
+        { id:"no6", name:"Stitch",            description:"Boule de Noël à l'effigie de Stitch, bleue et pleine de caractère.", photo:"images/boule6.jpg", badge:null, specs:{ Matière:"PLA bleu", Diamètre:"8 cm", Délai:"2 jours" } },
+        { id:"no7", name:"AT-AT",             description:"Boule de Noël en forme de marcheur AT-AT de Star Wars.",            photo:"images/boule7.jpg", badge:null, specs:{ Matière:"PLA", Diamètre:"9 cm", Délai:"3 jours" } },
+        { id:"no8", name:"Minnie",            description:"Boule de Noël à l'effigie de Minnie Mouse.",                        photo:"images/boule8.jpg", badge:null, specs:{ Matière:"PLA", Diamètre:"8 cm", Délai:"2 jours" } },
+        { id:"no9", name:"Mickey",            description:"Boule de Noël à l'effigie de Mickey Mouse.",                        photo:"images/boule9.jpg", badge:null, specs:{ Matière:"PLA", Diamètre:"8 cm", Délai:"2 jours" } },
+      ],
+      "divers": [
+        { id:"dv1", name:"Fleur XXL style brique", description:"Grande fleur décorative au style brique, imprimée en PLA.", photo:"images/div1.jpg", badge:null, specs:{ Matière:"PLA", Taille:"XXL", Délai:"5 jours" } },
+        { id:"dv2", name:"Porte casque",            description:"Support pour casque audio ou moto, solide et design.",      photo:"images/div2.jpg", badge:null, specs:{ Matière:"PETG", Délai:"3 jours", Fixation:"Bureau / Mur" } },
+        { id:"dv3", name:"Étoile de sapin",          description:"Étoile à placer au sommet du sapin de Noël.",              photo:"images/div3.jpg", badge:null, specs:{ Matière:"PLA silk", Hauteur:"12 cm", Délai:"2 jours" } },
+      ],
+      "lampe": [
+        { id:"lm1", name:"Lampe Flamme", description:"Lampe dont l'abat-jour imite une flamme vacillante, rendu organique et chaleureux.", photo:"images/lampe1.jpg", badge:null, specs:{ Matière:"PLA translucide", Hauteur:"30 cm", Délai:"5 jours" } },
+      ],
+      "kit-card": [
+        { id:"kc1", name:"Kit X-Wing",       description:"Porte-cartes inspiré du chasseur X-Wing de Star Wars.",               photo:"images/card1.jpg", badge:null,           specs:{ Matière:"PETG", Capacité:"6 cartes", Délai:"2 jours" } },
+        { id:"kc2", name:"Kit TIE Advanced", description:"Porte-cartes inspiré du TIE Advanced de Dark Vador, finition noire.", photo:"images/card2.jpg", badge:"Nouveau", specs:{ Matière:"PETG", Capacité:"6 cartes", Délai:"2 jours" } },
+      ],
+    };
+  }
+
+  // ── PLACEHOLDER ──
+  function placeholder() {
+    return `<div class="model-img-placeholder"><svg width="64" height="64" viewBox="0 0 64 64" fill="none"><rect x="6" y="22" width="52" height="36" stroke="#111" stroke-width="1.5"/><path d="M6 22L32 6L58 22" stroke="#111" stroke-width="1.5"/><line x1="32" y1="22" x2="32" y2="58" stroke="#111" stroke-width="1"/></svg></div>`;
+  }
+
+  // ── RENDU ──
+  function renderGrid(cat, items) {
+    const grid = document.getElementById("grid-" + cat);
+    const count = document.getElementById("count-" + cat);
+    if (!grid) return;
+    count.textContent = items.length + " modèle" + (items.length > 1 ? "s" : "");
+    if (items.length === 0) { grid.innerHTML = `<div class="loading">Aucun modèle</div>`; return; }
+    grid.innerHTML = items.map(m => `
+      <div class="model-card" data-id="${m.id}" data-cat="${cat}">
+        <div class="model-img">
+          ${m.badge ? `<div class="model-tag new">${m.badge}</div>` : ""}
+          ${m.photo ? `<img src="${m.photo}" alt="${m.name}" loading="lazy"/>` : placeholder()}
+        </div>
+        <div class="model-info">
+          <div class="model-name">${m.name}</div>
+          <div class="model-desc">${m.description}</div>
+          <div class="model-specs">
+            ${Object.entries(m.specs||{}).slice(0,3).map(([k,v]) => `<div class="model-spec">${k} : <strong>${v}</strong></div>`).join("")}
+          </div>
+        </div>
+      </div>
+    `).join("");
+    grid.querySelectorAll(".model-card").forEach(card => {
+      card.addEventListener("click", () => openLightbox(card.dataset.id, card.dataset.cat));
+    });
+  }
+
+  function renderAll() {
+    Object.entries(catalog).forEach(([cat, items]) => renderGrid(cat, items));
+  }
+
+  // ── LIGHTBOX ──
+  function openLightbox(id, cat) {
+    const m = (catalog[cat]||[]).find(x => x.id === id);
+    if (!m) return;
+    document.getElementById("lb-cat").textContent = categoryLabels[cat] || cat;
+    document.getElementById("lb-name").textContent = m.name;
+    document.getElementById("lb-desc").textContent = m.description;
+    document.getElementById("lb-img").innerHTML = m.photo ? `<img src="${m.photo}" alt="${m.name}"/>` : placeholder();
+    document.getElementById("lb-specs").innerHTML = Object.entries(m.specs||{}).map(([k,v]) =>
+      `<div class="lightbox-spec"><span>${k}</span><span>${v}</span></div>`).join("");
+    document.getElementById("lightbox").classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+  document.getElementById("lightbox-close").addEventListener("click", closeLB);
+  document.getElementById("lightbox").addEventListener("click", e => { if (e.target.id === "lightbox") closeLB(); });
+  function closeLB() { document.getElementById("lightbox").classList.remove("open"); document.body.style.overflow = ""; }
+
+  // ── MOT DE PASSE ──
+  document.getElementById("open-admin").addEventListener("click", () => {
+    document.getElementById("pwd-overlay").classList.add("open");
+    document.getElementById("pwd-input").value = "";
+    document.getElementById("pwd-error").style.display = "none";
+    setTimeout(() => document.getElementById("pwd-input").focus(), 100);
+  });
+  document.getElementById("pwd-btn").addEventListener("click", checkPwd);
+  document.getElementById("pwd-input").addEventListener("keydown", e => { if (e.key === "Enter") checkPwd(); });
+  function checkPwd() {
+    if (document.getElementById("pwd-input").value === ADMIN_PWD) {
+      document.getElementById("pwd-overlay").classList.remove("open");
+      document.getElementById("admin-overlay").classList.add("open");
+      document.body.style.overflow = "hidden";
+    } else {
+      document.getElementById("pwd-error").style.display = "block";
+    }
+  }
+
+  // ── PANEL ADMIN ──
+  document.getElementById("btn-cancel").addEventListener("click", closeAdmin);
+  document.getElementById("admin-overlay").addEventListener("click", e => { if (e.target.id === "admin-overlay") closeAdmin(); });
+  function closeAdmin() { document.getElementById("admin-overlay").classList.remove("open"); document.body.style.overflow = ""; }
+
+  document.getElementById("btn-save").addEventListener("click", async () => {
+    const name  = document.getElementById("f-name").value.trim();
+    const cat   = document.getElementById("f-cat").value;
+    const desc  = document.getElementById("f-desc").value.trim();
+    const photo = document.getElementById("f-photo").value.trim();
+    const mat   = document.getElementById("f-mat").value.trim();
+    const delai = document.getElementById("f-delai").value.trim();
+    const badge = document.getElementById("f-badge").value.trim() || null;
+
+    if (!name || !desc) { showStatus("error", "Le nom et la description sont obligatoires."); return; }
+
+    const newItem = {
+      id: cat + "_" + Date.now(),
+      name, description: desc, photo,
+      badge,
+      specs: {
+        ...(mat   ? { Matière: mat }   : {}),
+        ...(delai ? { Délai: delai }   : {}),
+      }
+    };
+
+    if (!catalog[cat]) catalog[cat] = [];
+    catalog[cat].push(newItem);
+
+    const btn = document.getElementById("btn-save");
+    btn.textContent = "Enregistrement…"; btn.disabled = true;
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+        body: JSON.stringify(catalog)
+      });
+      if (!res.ok) throw new Error("Erreur API");
+      showStatus("success", `"${name}" ajouté avec succès !`);
+      renderGrid(cat, catalog[cat]);
+      // Reset form
+      ["f-name","f-desc","f-photo","f-mat","f-delai","f-badge"].forEach(id => document.getElementById(id).value = "");
+    } catch(e) {
+      catalog[cat].pop();
+      showStatus("error", "Erreur lors de l'enregistrement. Vérifie ta connexion.");
+    }
+    btn.textContent = "Enregistrer"; btn.disabled = false;
+  });
+
+  function showStatus(type, msg) {
+    const el = document.getElementById("admin-status");
+    el.textContent = msg; el.className = "admin-status " + type;
+    setTimeout(() => { el.className = "admin-status"; }, 4000);
+  }
+
+  // ── NAV ACTIVE ──
+  const sections = document.querySelectorAll(".cat-section");
+  const navLinks = document.querySelectorAll(".nav-links a");
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove("active"));
+        const link = document.querySelector(`.nav-links a[href="#${entry.target.id}"]`);
+        if (link) link.classList.add("active");
+      }
+    });
+  }, { rootMargin: "-40% 0px -55% 0px" });
+  sections.forEach(s => observer.observe(s));
+
+  // ── INIT ──
+  loadCatalog();
+</script>
+</body>
+</html>
