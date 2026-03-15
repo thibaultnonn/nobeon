@@ -160,7 +160,16 @@
       .lightbox-inner { grid-template-columns: 1fr; }
       footer { flex-direction: column; gap: 20px; padding: 32px 20px; }
     }
-  </style>
+  
+.delete-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(198,40,40,0.9); color: #fff;
+  border: none; width: 24px; height: 24px; border-radius: 50%;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  opacity: 0; transition: opacity 0.2s;
+}
+.model-card:hover .delete-btn { opacity: 1; }
+</style>
 </head>
 <body>
 
@@ -271,7 +280,7 @@
       </div>
       <div class="form-group">
         <label class="form-label">URL / chemin de la photo</label>
-        <input class="form-input" type="text" id="f-photo" placeholder="maphoto.jpg"/>
+        <input class="form-input" type="text" id="f-photo" placeholder="fig9.jpg"/>
         <span class="form-hint">Place ton image dans le dossier images/ sur GitHub, puis indique son nom ici.</span>
       </div>
       <div class="form-group">
@@ -299,61 +308,75 @@
   const BIN_ID  = "69b6c1aec3097a1dd5290df8";
   const API_KEY = "$2a$10$h6gT2GNQ1/P1KCIqCc2NiOXNdYRjRwrr/UXslHFn4AarkDsp/FXpi";
   const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
-  const ADMIN_PWD = "nobeon2026"; // ← change ce mot de passe
+  const ADMIN_PWD = "nobeon2026";
 
   const categoryLabels = { "minifig":"Minifig","noel":"Noël","divers":"Divers","lampe":"Lampe","kit-card":"Kit Card" };
-
   let catalog = {};
 
-  // ── FETCH CATALOGUE ──
+  // ── FETCH ──
   async function loadCatalog() {
     try {
       const res = await fetch(API_URL + "/latest", { headers: { "X-Master-Key": API_KEY } });
       const data = await res.json();
       catalog = data.record;
-      // Si le bin est vide ou mal initialisé, on part des données par défaut
-      if (!catalog || typeof catalog !== "object") catalog = getDefaultCatalog();
+      const isEmpty = !catalog 
+        || typeof catalog !== "object" 
+        || Object.keys(catalog).length === 0
+        || Object.values(catalog).every(arr => !Array.isArray(arr) || arr.length === 0);
+      if (isEmpty) {
+        catalog = getDefaultCatalog();
+        await saveCatalog();
+      }
     } catch(e) {
       catalog = getDefaultCatalog();
     }
     renderAll();
   }
 
+  // ── SAVE ──
+  async function saveCatalog() {
+    await fetch(API_URL, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+      body: JSON.stringify(catalog)
+    });
+  }
+
   // ── DONNÉES PAR DÉFAUT ──
   function getDefaultCatalog() {
     return {
       "minifig": [
-        { id:"mf1", name:"Spiderman",      description:"Minifig Spiderman en PLA, couleurs vives, détails costume imprimés.",   photo:"fig1.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
-        { id:"mf2", name:"Superman",       description:"Minifig Superman en PLA, cape et logo S fidèlement reproduits.",         photo:"fig2.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
-        { id:"mf3", name:"Batman",         description:"Minifig Batman en PLA noir mat, combinaison et cape détaillées.",        photo:"fig3.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
-        { id:"mf4", name:"Harry Potter",   description:"Minifig Harry Potter avec cape, baguette et lunettes rondes.",           photo:"fig4.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
-        { id:"mf5", name:"Gandalf",        description:"Minifig Gandalf le Gris avec chapeau et bâton de sorcier.",              photo:"fig5.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
-        { id:"mf6", name:"Stormtrooper",   description:"Minifig Stormtrooper Star Wars en PLA blanc, armure détaillée.",         photo:"fig6.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
-        { id:"mf7", name:"Indiana Jones",  description:"Minifig Indiana Jones avec chapeau, fouet et veste en cuir.",             photo:"fig7.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
-        { id:"mf8", name:"Dark Vador",     description:"Minifig Dark Vador en PLA noir brillant, casque et cape iconiques.",     photo:"fig8.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
+        { id:"mf1", name:"Spiderman",     description:"Minifig Spiderman en PLA, couleurs vives, détails costume imprimés.",   photo:"fig1.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
+        { id:"mf2", name:"Superman",      description:"Minifig Superman en PLA, cape et logo S fidèlement reproduits.",         photo:"fig2.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
+        { id:"mf3", name:"Batman",        description:"Minifig Batman en PLA noir mat, combinaison et cape détaillées.",        photo:"fig3.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
+        { id:"mf4", name:"Harry Potter",  description:"Minifig Harry Potter avec cape, baguette et lunettes rondes.",           photo:"fig4.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
+        { id:"mf5", name:"Gandalf",       description:"Minifig Gandalf le Gris avec chapeau et bâton de sorcier.",              photo:"fig5.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
+        { id:"mf6", name:"Stormtrooper",  description:"Minifig Stormtrooper Star Wars en PLA blanc, armure détaillée.",         photo:"fig6.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
+        { id:"mf7", name:"Indiana Jones", description:"Minifig Indiana Jones avec chapeau, fouet et veste en cuir.",             photo:"fig7.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
+        { id:"mf8", name:"Dark Vador",    description:"Minifig Dark Vador en PLA noir brillant, casque et cape iconiques.",     photo:"fig8.jpg", badge:null, specs:{ Matière:"PLA", Hauteur:"4 cm", Délai:"3 jours" } },
       ],
       "noel": [
-        { id:"no1", name:"Boules de Noël",    description:"Boules de Noël classiques ajourées avec motifs étoilés.",            photo:"boule1.jpg", badge:null, specs:{ Matière:"PLA mat", Diamètre:"8 cm", Délai:"2 jours" } },
-        { id:"no2", name:"Étoile de la Mort", description:"Boule de Noël en forme d'Étoile de la Mort.",                       photo:"boule2.jpg", badge:null, specs:{ Matière:"PLA", Diamètre:"8 cm", Délai:"2 jours" } },
-        { id:"no3", name:"Stormtrooper",      description:"Boule de Noël en forme de casque Stormtrooper.",                    photo:"boule3.jpg", badge:null, specs:{ Matière:"PLA blanc", Diamètre:"8 cm", Délai:"2 jours" } },
-        { id:"no4", name:"Dark Vador",        description:"Boule de Noël en forme de casque Dark Vador.",                      photo:"boule4.jpg", badge:null, specs:{ Matière:"PLA noir", Diamètre:"8 cm", Délai:"2 jours" } },
+        { id:"no1", name:"Boules de Noël",    description:"Boules de Noël classiques ajourées avec motifs étoilés.",              photo:"boule1.jpg", badge:null, specs:{ Matière:"PLA mat",     Diamètre:"8 cm", Délai:"2 jours" } },
+        { id:"no2", name:"Étoile de la Mort", description:"Boule de Noël en forme d'Étoile de la Mort Star Wars.",               photo:"boule2.jpg", badge:null, specs:{ Matière:"PLA",         Diamètre:"8 cm", Délai:"2 jours" } },
+        { id:"no3", name:"Stormtrooper",      description:"Boule de Noël en forme de casque Stormtrooper.",                      photo:"boule3.jpg", badge:null, specs:{ Matière:"PLA blanc",   Diamètre:"8 cm", Délai:"2 jours" } },
+        { id:"no4", name:"Dark Vador",        description:"Boule de Noël en forme de casque Dark Vador.",                        photo:"boule4.jpg", badge:null, specs:{ Matière:"PLA noir",    Diamètre:"8 cm", Délai:"2 jours" } },
         { id:"no5", name:"Vif d'Or",          description:"Boule de Noël en forme de Vif d'Or de Harry Potter, dorée et ailée.", photo:"boule5.jpg", badge:null, specs:{ Matière:"PLA silk or", Diamètre:"7 cm", Délai:"2 jours" } },
-        { id:"no6", name:"Stitch",            description:"Boule de Noël à l'effigie de Stitch, bleue et pleine de caractère.", photo:"boule6.jpg", badge:null, specs:{ Matière:"PLA bleu", Diamètre:"8 cm", Délai:"2 jours" } },
-        { id:"no7", name:"AT-AT",             description:"Boule de Noël en forme de marcheur AT-AT de Star Wars.",            photo:"boule7.jpg", badge:null, specs:{ Matière:"PLA", Diamètre:"9 cm", Délai:"3 jours" } },
-        { id:"no8", name:"Minnie",            description:"Boule de Noël à l'effigie de Minnie Mouse.",                        photo:"boule8.jpg", badge:null, specs:{ Matière:"PLA", Diamètre:"8 cm", Délai:"2 jours" } },
-        { id:"no9", name:"Mickey",            description:"Boule de Noël à l'effigie de Mickey Mouse.",                        photo:"boule9.jpg", badge:null, specs:{ Matière:"PLA", Diamètre:"8 cm", Délai:"2 jours" } },
+        { id:"no6", name:"Stitch",            description:"Boule de Noël à l'effigie de Stitch, bleue et pleine de caractère.",  photo:"boule6.jpg", badge:null, specs:{ Matière:"PLA bleu",   Diamètre:"8 cm", Délai:"2 jours" } },
+        { id:"no7", name:"AT-AT",             description:"Boule de Noël en forme de marcheur AT-AT de Star Wars.",              photo:"boule7.jpg", badge:null, specs:{ Matière:"PLA",         Diamètre:"9 cm", Délai:"3 jours" } },
+        { id:"no8", name:"Minnie",            description:"Boule de Noël à l'effigie de Minnie Mouse.",                          photo:"boule8.jpg", badge:null, specs:{ Matière:"PLA",         Diamètre:"8 cm", Délai:"2 jours" } },
+        { id:"no9", name:"Mickey",            description:"Boule de Noël à l'effigie de Mickey Mouse.",                          photo:"boule9.jpg", badge:null, specs:{ Matière:"PLA",         Diamètre:"8 cm", Délai:"2 jours" } },
       ],
       "divers": [
-        { id:"dv1", name:"Fleur XXL style brique", description:"Grande fleur décorative au style brique, imprimée en PLA.", photo:"div1.jpg", badge:null, specs:{ Matière:"PLA", Taille:"XXL", Délai:"5 jours" } },
-        { id:"dv2", name:"Porte casque",            description:"Support pour casque audio ou moto, solide et design.",      photo:"div2.jpg", badge:null, specs:{ Matière:"PETG", Délai:"3 jours", Fixation:"Bureau / Mur" } },
-        { id:"dv3", name:"Étoile de sapin",          description:"Étoile à placer au sommet du sapin de Noël.",              photo:"div3.jpg", badge:null, specs:{ Matière:"PLA silk", Hauteur:"12 cm", Délai:"2 jours" } },
+        { id:"dv1", name:"Fleur XXL style brique", description:"Grande fleur décorative au style brique, imprimée en PLA.", photo:"div1.jpg", badge:null, specs:{ Matière:"PLA",      Taille:"XXL",     Délai:"5 jours" } },
+        { id:"dv2", name:"Porte casque",            description:"Support pour casque audio ou moto, solide et design.",      photo:"div2.jpg", badge:null, specs:{ Matière:"PETG",     Délai:"3 jours",  Fixation:"Bureau / Mur" } },
+        { id:"dv3", name:"Étoile de sapin",          description:"Étoile à placer au sommet du sapin de Noël.",              photo:"div3.jpg", badge:null, specs:{ Matière:"PLA silk", Hauteur:"12 cm",  Délai:"2 jours" } },
       ],
       "lampe": [
         { id:"lm1", name:"Lampe Flamme", description:"Lampe dont l'abat-jour imite une flamme vacillante, rendu organique et chaleureux.", photo:"lampe1.jpg", badge:null, specs:{ Matière:"PLA translucide", Hauteur:"30 cm", Délai:"5 jours" } },
       ],
       "kit-card": [
-        { id:"kc1", name:"Kit X-Wing",       description:"Porte-cartes inspiré du chasseur X-Wing de Star Wars.",               photo:"card1.jpg", badge:null,           specs:{ Matière:"PETG", Capacité:"6 cartes", Délai:"2 jours" } },
-        { id:"kc2", name:"Kit TIE Advanced", description:"Porte-cartes inspiré du TIE Advanced de Dark Vador, finition noire.", photo:"card2.jpg", badge:"Nouveau", specs:{ Matière:"PETG", Capacité:"6 cartes", Délai:"2 jours" } },
+        { id:"kc1", name:"Kit X-Wing",       description:"Porte-cartes inspiré du chasseur X-Wing de Star Wars.",               photo:"card1.jpg", badge:null,       specs:{ Matière:"PETG", Capacité:"6 cartes", Délai:"2 jours" } },
+        { id:"kc2", name:"Kit TIE Advanced", description:"Porte-cartes inspiré du TIE Advanced de Dark Vador, finition noire.", photo:"card2.jpg", badge:"Nouveau",  specs:{ Matière:"PETG", Capacité:"6 cartes", Délai:"2 jours" } },
       ],
     };
   }
@@ -373,6 +396,7 @@
     grid.innerHTML = items.map(m => `
       <div class="model-card" data-id="${m.id}" data-cat="${cat}">
         <div class="model-img">
+          <button class="delete-btn" data-id="${m.id}" data-cat="${cat}">✕</button>
           ${m.badge ? `<div class="model-tag new">${m.badge}</div>` : ""}
           ${m.photo ? `<img src="${m.photo}" alt="${m.name}" loading="lazy"/>` : placeholder()}
         </div>
@@ -385,6 +409,19 @@
         </div>
       </div>
     `).join("");
+
+    grid.querySelectorAll(".delete-btn").forEach(btn => {
+      btn.addEventListener("click", async e => {
+        e.stopPropagation();
+        if (!confirm("Supprimer cet article ?")) return;
+        const c = btn.dataset.cat;
+        const id = btn.dataset.id;
+        catalog[c] = catalog[c].filter(x => x.id !== id);
+        await saveCatalog();
+        renderGrid(c, catalog[c]);
+      });
+    });
+
     grid.querySelectorAll(".model-card").forEach(card => {
       card.addEventListener("click", () => openLightbox(card.dataset.id, card.dataset.cat));
     });
@@ -448,11 +485,10 @@
 
     const newItem = {
       id: cat + "_" + Date.now(),
-      name, description: desc, photo,
-      badge,
+      name, description: desc, photo, badge,
       specs: {
-        ...(mat   ? { Matière: mat }   : {}),
-        ...(delai ? { Délai: delai }   : {}),
+        ...(mat   ? { Matière: mat }  : {}),
+        ...(delai ? { Délai: delai }  : {}),
       }
     };
 
@@ -463,15 +499,9 @@
     btn.textContent = "Enregistrement…"; btn.disabled = true;
 
     try {
-      const res = await fetch(API_URL, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
-        body: JSON.stringify(catalog)
-      });
-      if (!res.ok) throw new Error("Erreur API");
+      await saveCatalog();
       showStatus("success", `"${name}" ajouté avec succès !`);
       renderGrid(cat, catalog[cat]);
-      // Reset form
       ["f-name","f-desc","f-photo","f-mat","f-delai","f-badge"].forEach(id => document.getElementById(id).value = "");
     } catch(e) {
       catalog[cat].pop();
