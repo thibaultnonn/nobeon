@@ -170,6 +170,15 @@
   z-index: 10; pointer-events: all;
 }
 .model-card:hover .delete-btn { opacity: 1; }
+
+    .btn-makerworld {
+      display: inline-block; margin-top: 8px;
+      background: var(--accent); color: #fff;
+      padding: 12px 24px; text-decoration: none;
+      font-size: 13px; font-weight: 600; letter-spacing: 0.05em;
+      text-transform: uppercase; transition: background 0.2s;
+    }
+    .btn-makerworld:hover { background: #333; }
 </style>
 </head>
 <body>
@@ -184,6 +193,7 @@
     <li><a href="#lampe">Lampe</a></li>
     <li><a href="#kit-card">Kit Card</a></li>
 	<li><a href="#Maison">Accessoire Maison</a></li>
+	<li><a href="#fete">Fêtes</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
   <button class="nav-admin-btn" id="open-admin">+ Ajouter</button>
@@ -227,6 +237,10 @@
   <div class="cat-header"><h2 class="cat-title">Accessoire Maison</h2><span class="cat-count" id="count-Maison"></span></div>
   <div class="models-grid" id="grid-Maison"><div class="loading">Chargement…</div></div>
 </section>
+<section class="cat-section" id="fete">
+  <div class="cat-header"><h2 class="cat-title">Fêtes</h2><span class="cat-count" id="count-fete"></span></div>
+  <div class="models-grid" id="grid-fete"><div class="loading">Chargement…</div></div>
+</section>
 
 <footer id="contact">
   <span class="footer-logo">Nobeon</span>
@@ -247,6 +261,7 @@
       <div class="lightbox-name" id="lb-name"></div>
       <div class="lightbox-desc" id="lb-desc"></div>
       <div class="lightbox-specs" id="lb-specs"></div>
+      <div id="lb-url"></div>
     </div>
   </div>
 </div>
@@ -275,6 +290,7 @@
           <option value="lampe">Lampe</option>
           <option value="kit-card">Kit Card</option>
 		  <option value="Maison">Accessoire Maison</option>
+		  <option value="fete">Fêtes</option>
         </select>
       </div>
       <div class="form-group">
@@ -302,6 +318,10 @@
         <label class="form-label">Badge (optionnel)</label>
         <input class="form-input" type="text" id="f-badge" placeholder="Ex : Nouveau, Bestseller…"/>
       </div>
+      <div class="form-group">
+        <label class="form-label">Lien MakerWorld (optionnel)</label>
+        <input class="form-input" type="text" id="f-url" placeholder="https://makerworld.com/…"/>
+      </div>
       <div class="admin-status" id="admin-status"></div>
       <div class="admin-actions">
         <button class="btn-save" id="btn-save">Enregistrer</button>
@@ -317,7 +337,7 @@
   const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
   const ADMIN_PWD = "nobeon2026";
 
-  const categoryLabels = { "minifig":"Minifig","noel":"Noël","divers":"Divers","lampe":"Lampe","kit-card":"Kit Card","Maison":"Accessoire Maison" };
+  const categoryLabels = { "minifig":"Minifig","noel":"Noël","divers":"Divers","lampe":"Lampe","kit-card":"Kit Card","Maison":"Accessoire Maison","fete":"Fêtes" };
   let catalog = {};
 
   // ── FETCH ──
@@ -454,6 +474,9 @@
     document.getElementById("lb-img").innerHTML = m.photo ? `<img src="${m.photo}" alt="${m.name}"/>` : placeholder();
     document.getElementById("lb-specs").innerHTML = Object.entries(m.specs||{}).map(([k,v]) =>
       `<div class="lightbox-spec"><span>${k}</span><span>${v}</span></div>`).join("");
+    document.getElementById("lb-url").innerHTML = m.url
+      ? `<a class="btn-makerworld" href="${m.url}" target="_blank">↓ Télécharger sur MakerWorld</a>`
+      : "";
     document.getElementById("lightbox").classList.add("open");
     document.body.style.overflow = "hidden";
   }
@@ -496,9 +519,10 @@
 
     if (!name || !desc) { showStatus("error", "Le nom et la description sont obligatoires."); return; }
 
+    const url = document.getElementById("f-url").value.trim();
     const newItem = {
       id: cat + "_" + Date.now(),
-      name, description: desc, photo, badge,
+      name, description: desc, photo, badge, url,
       specs: {
         ...(mat   ? { Matière: mat }  : {}),
         ...(delai ? { Délai: delai }  : {}),
@@ -515,7 +539,7 @@
       await saveCatalog();
       showStatus("success", `"${name}" ajouté avec succès !`);
       renderGrid(cat, catalog[cat]);
-      ["f-name","f-desc","f-photo","f-mat","f-delai","f-badge"].forEach(id => document.getElementById(id).value = "");
+      ["f-name","f-desc","f-photo","f-mat","f-delai","f-badge","f-url"].forEach(id => document.getElementById(id).value = "");
     } catch(e) {
       catalog[cat].pop();
       showStatus("error", "Erreur lors de l'enregistrement. Vérifie ta connexion.");
