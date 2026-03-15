@@ -320,8 +320,10 @@
       const res = await fetch(API_URL + "/latest", { headers: { "X-Master-Key": API_KEY } });
       const data = await res.json();
       catalog = data.record;
-      // Si le bin est vide ou mal initialisé, on part des données par défaut
-      if (!catalog || typeof catalog !== "object") catalog = getDefaultCatalog();
+      if (!catalog || typeof catalog !== "object" || Object.keys(catalog).length === 0) {
+        catalog = getDefaultCatalog();
+        await saveCatalog(); // initialise le bin avec les données par défaut
+      }
     } catch(e) {
       catalog = getDefaultCatalog();
     }
@@ -365,6 +367,15 @@
         { id:"kc2", name:"Kit TIE Advanced", description:"Porte-cartes inspiré du TIE Advanced de Dark Vador, finition noire.", photo:"card2.jpg", badge:"Nouveau", specs:{ Matière:"PETG", Capacité:"6 cartes", Délai:"2 jours" } },
       ],
     };
+  }
+
+  // ── SAVE CATALOGUE ──
+  async function saveCatalog() {
+    await fetch(API_URL, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+      body: JSON.stringify(catalog)
+    });
   }
 
   // ── PLACEHOLDER ──
