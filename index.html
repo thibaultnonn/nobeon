@@ -179,9 +179,61 @@
       text-transform: uppercase; transition: background 0.2s;
     }
     .btn-makerworld:hover { background: #333; }
+	
+	 /* LOGIN */
+    #login-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-box {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 24px; width: 320px;
+    }
+    .login-logo {
+      font-size: 22px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: #fff;
+    }
+    .login-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #555; text-align: center;
+    }
+    .login-input {
+      width: 100%; font-family: var(--font); font-size: 15px;
+      background: #1e1e1e; border: 1px solid #333; color: #fff;
+      padding: 14px 18px; outline: none; text-align: center;
+      letter-spacing: 0.1em; transition: border-color 0.2s;
+    }
+    .login-input:focus { border-color: var(--highlight); }
+    .login-btn {
+      width: 100%; background: var(--highlight); color: var(--accent);
+      border: none; font-family: var(--font); font-size: 13px;
+      font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 14px; cursor: pointer; transition: opacity 0.2s;
+    }
+    .login-btn:hover { opacity: 0.85; }
+    .login-error {
+      font-size: 12px; color: #e57373;
+      display: none; text-align: center;
+    }
+    #site-content { display: none; }
 </style>
 </head>
 <body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Nobeon</div>
+    <div class="login-label">Entrez le mot de passe pour accéder au site</div>
+    <input class="login-input" type="password" id="site-pwd" placeholder="••••••••"/>
+    <button class="login-btn" id="site-pwd-btn">Entrer</button>
+    <div class="login-error" id="site-pwd-error">Mot de passe incorrect.</div>
+  </div>
+</div>
+
+<!-- SITE CONTENT -->
+<div id="site-content">
 
 <!-- NAV -->
 <nav>
@@ -332,6 +384,33 @@
 </div>
 
 <script>
+
+  // ── LOGIN SITE ──
+  const SITE_PWD = "nobeon2026";  // ← change ce mot de passe
+
+  function checkSiteLogin() {
+    if (sessionStorage.getItem("nobeon_auth") === "1") {
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("site-content").style.display = "block";
+    }
+  }
+
+  document.getElementById("site-pwd-btn").addEventListener("click", tryLogin);
+  document.getElementById("site-pwd").addEventListener("keydown", e => { if (e.key === "Enter") tryLogin(); });
+
+  function tryLogin() {
+    if (document.getElementById("site-pwd").value === SITE_PWD) {
+      sessionStorage.setItem("nobeon_auth", "1");
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("site-content").style.display = "block";
+    } else {
+      document.getElementById("site-pwd-error").style.display = "block";
+      document.getElementById("site-pwd").value = "";
+    }
+  }
+
+  checkSiteLogin();
+
   const BIN_ID  = "69b6c1aec3097a1dd5290df8";
   const API_KEY = "$2a$10$h6gT2GNQ1/P1KCIqCc2NiOXNdYRjRwrr/UXslHFn4AarkDsp/FXpi";
   const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
