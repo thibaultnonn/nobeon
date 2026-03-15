@@ -183,6 +183,7 @@
     <li><a href="#divers">Divers</a></li>
     <li><a href="#lampe">Lampe</a></li>
     <li><a href="#kit-card">Kit Card</a></li>
+	<li><a href="#Maison">Accesoire Maison</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
   <button class="nav-admin-btn" id="open-admin">+ Ajouter</button>
@@ -221,6 +222,10 @@
 <section class="cat-section" id="kit-card">
   <div class="cat-header"><h2 class="cat-title">Kit Card</h2><span class="cat-count" id="count-kit-card"></span></div>
   <div class="models-grid" id="grid-kit-card"><div class="loading">Chargement…</div></div>
+</section>
+<section class="cat-section" id="Maison">
+  <div class="cat-header"><h2 class="cat-title">Accesoire Maison</h2><span class="cat-count" id="count-Maison"></span></div>
+  <div class="models-grid" id="grid-Maison"><div class="loading">Chargement…</div></div>
 </section>
 
 <footer id="contact">
@@ -269,6 +274,7 @@
           <option value="divers">Divers</option>
           <option value="lampe">Lampe</option>
           <option value="kit-card">Kit Card</option>
+		  <option value="Maison">Accesoire Maison</option>
         </select>
       </div>
       <div class="form-group">
@@ -311,7 +317,7 @@
   const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
   const ADMIN_PWD = "nobeon2026";
 
-  const categoryLabels = { "minifig":"Minifig","noel":"Noël","divers":"Divers","lampe":"Lampe","kit-card":"Kit Card" };
+  const categoryLabels = { "minifig":"Minifig","noel":"Noël","divers":"Divers","lampe":"Lampe","kit-card":"Kit Card","Maison":"Accesoire Maison" };
   let catalog = {};
 
   // ── FETCH ──
@@ -379,6 +385,8 @@
         { id:"kc1", name:"Kit X-Wing",       description:"Porte-cartes inspiré du chasseur X-Wing de Star Wars.",               photo:"card1.jpg", badge:null,       specs:{ Matière:"PETG", Capacité:"6 cartes", Délai:"2 jours" } },
         { id:"kc2", name:"Kit TIE Advanced", description:"Porte-cartes inspiré du TIE Advanced de Dark Vador, finition noire.", photo:"card2.jpg", badge:"Nouveau",  specs:{ Matière:"PETG", Capacité:"6 cartes", Délai:"2 jours" } },
       ],
+	  "Maison":[
+	  ],
     };
   }
 
